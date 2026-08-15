@@ -34,3 +34,9 @@ spring.datasource.password=${DB_PASSWORD}
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 ```
+
+### 接続確認
+
+Spring Boot起動時にPostgreSQLへの接続およびJPAの初期化が正常に完了することを確認した。
+
+![Spring Boot DB接続確認](images/DB接続初期設定完了エビデンス.jpg)
