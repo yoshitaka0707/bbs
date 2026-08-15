@@ -38,6 +38,7 @@ main
    ├─ feature/post
    ├─ feature/validation
    ├─ feature/ui
+   ├─ feature/docs
    ├─ feature/unit-test
    └─ feature/e2e-test
 ```
@@ -79,17 +80,45 @@ git fetch origin
 git rebase origin/develop
 ```
 
-rebase前の作業ブランチをすでにリモートへpushしている場合は、rebaseによってコミットIDが変更されるため、以下でリモートブランチを更新します。
+rebase前の作業ブランチをすでにリモートへpushしている場合は、rebaseによってコミットIDが変更されるため、以下の形式でリモートブランチを更新します。
 
 ```bash
-git push --force-with-lease
+git push --force-with-lease origin <featureブランチ名>
 ```
 
-`--force` は使用せず、リモートブランチの意図しない上書きを防ぐため `--force-with-lease` を使用します。
+通常の `--force` は使用せず、リモートブランチの意図しない上書きを防ぐため `--force-with-lease` を使用します。
 
-Pull Requestから `develop` へ反映する際もマージコミットを作成せず、直線的な履歴を維持します。
+### Pull Requestのマージ
 
-マージ済みの `feature/*` ブランチは削除します。
+`feature/*` から `develop` へ変更を反映する際は、Gitの履歴を直線的に保つため `Rebase and merge` を使用します。
+
+`Create a merge commit` は使用しません。
+
+Pull Request作成時は、マージ先と作業ブランチが以下になっていることを確認します。
+
+```text
+base: develop
+compare: feature/*
+```
+
+GitHubのデフォルトブランチを `develop` に設定している場合でも、デフォルトブランチの設定だけに依存せず、Pull Request作成時およびマージ実行前にマージ先が `develop` であることを確認します。
+
+マージ完了後、不要になった `feature/*` ブランチは削除します。
+
+### mainへの反映
+
+機能実装およびテストが完了した段階で、`develop` の内容を `main` へ反映します。
+
+`main` に独自の変更がないことを確認し、Fast-forward可能な場合のみ反映します。
+
+```bash
+git switch main
+git fetch origin
+git merge --ff-only origin/develop
+git push origin main
+```
+
+`--ff-only` を使用することで、履歴が分岐している場合は処理を停止し、意図しないマージコミットの作成を防ぎます。
 
 ## Documents
 
