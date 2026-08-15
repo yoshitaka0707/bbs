@@ -42,19 +42,54 @@ main
    └─ feature/e2e-test
 ```
 
-各機能は `feature/*` ブランチで実装し、動作確認後に `develop` ブランチへマージします。
+各ブランチの役割は以下の通りです。
+
+* `main`：安定版・リリース用ブランチ
+* `develop`：開発内容を統合するブランチ
+* `feature/*`：機能単位の作業ブランチ
+
+`feature/*` ブランチは `develop` から作成し、実装・動作確認後にPull Requestを作成します。
+
+実務でのレビュー工程を想定し、Pull Request上で変更内容を確認できる状態を維持したうえで `develop` へ反映する運用とします。
 
 ```text
+develop
+↓
 feature/* で実装
 ↓
-develop へマージ
+Pull Request作成
+↓
+変更内容を確認
+↓
+developへ反映
 ↓
 機能実装・テスト完了
 ↓
-develop を main へマージ
+developをmainへ反映
 ```
 
-`main` は安定版、`develop` は開発統合用、`feature/*` は機能単位の作業用ブランチとして運用します。
+### 履歴管理
+
+Gitの履歴は直線的に保ち、**マージコミットは作成しません**。
+
+Pull Request作成後に `develop` が更新された場合は、作業ブランチへ `develop` をマージするのではなく、最新の `develop` に対してrebaseを行います。
+
+```bash
+git fetch origin
+git rebase origin/develop
+```
+
+rebase前の作業ブランチをすでにリモートへpushしている場合は、rebaseによってコミットIDが変更されるため、以下でリモートブランチを更新します。
+
+```bash
+git push --force-with-lease
+```
+
+`--force` は使用せず、リモートブランチの意図しない上書きを防ぐため `--force-with-lease` を使用します。
+
+Pull Requestから `develop` へ反映する際もマージコミットを作成せず、直線的な履歴を維持します。
+
+マージ済みの `feature/*` ブランチは削除します。
 
 ## Documents
 
