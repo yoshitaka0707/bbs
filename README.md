@@ -27,6 +27,35 @@ Spring Bootを使用したシンプルな掲示板アプリケーションです
 * JUnitによる単体テスト
 * PlaywrightによるE2Eテスト
 
+## ブランチ運用
+
+開発では以下のブランチ構成を使用します。
+
+```text
+main
+└─ develop
+   ├─ feature/db-connection
+   ├─ feature/post
+   ├─ feature/validation
+   ├─ feature/ui
+   ├─ feature/unit-test
+   └─ feature/e2e-test
+```
+
+各機能は `feature/*` ブランチで実装し、動作確認後に `develop` ブランチへマージします。
+
+```text
+feature/* で実装
+↓
+develop へマージ
+↓
+機能実装・テスト完了
+↓
+develop を main へマージ
+```
+
+`main` は安定版、`develop` は開発統合用、`feature/*` は機能単位の作業用ブランチとして運用します。
+
 ## Documents
 
 開発時の設定や作業内容は以下に記録しています。
