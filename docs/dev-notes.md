@@ -124,3 +124,65 @@ Xの中央カラムを参考に、投稿フォームと投稿一覧を縦方向�
 名前と本文が未入力の場合、投稿処理を行わず、入力エラーが画面に表示されることを確認した。
 
 ![入力バリデーション](images/validation-error.jpg)
+
+## CSRF対策
+
+投稿フォームに対するCSRF攻撃を防ぐため、Spring Securityを導入した。
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+```
+
+本アプリはログイン機能を持たず、アクセスした利用者が投稿できる仕様である。そのため、すべてのリクエストを認証なしで許可する設定とした。
+
+```java
+@Configuration
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http)
+            throws Exception {
+
+        http.authorizeHttpRequests(authorize ->
+                authorize.anyRequest().permitAll()
+        );
+
+        return http.build();
+    }
+}
+```
+
+Spring SecurityではCSRF対策が標準で有効になるため、`SecurityConfig`ではCSRFを無効化する設定を記述していない。
+
+投稿フォームではThymeleafの`th:action`を使用しているため、Spring Securityとの連携によってCSRFトークンがhidden項目として自動的に追加される。
+
+```html
+<form th:action="@{/posts}" th:object="${postForm}" method="post">
+```
+
+この構成により、通常の投稿フォームからは投稿できる一方、正しいCSRFトークンを持たないPOSTリクエストは拒否される。
+
+### 動作確認
+
+#### CSRFトークンを含む通常の投稿
+
+ブラウザから投稿フォームを使用し、正常に投稿できることを確認した。
+
+ThymeleafによってCSRFトークンがフォームへ自動的に追加されるため、Spring SecurityのCSRF検証を通過し、投稿内容がデータベースへ登録される。
+
+![CSRFトークンを含む通常の投稿](images/csrf-valid-post.jpg)
+
+#### CSRFトークンを含まない投稿
+
+CSRFトークンを含めずに、投稿エンドポイントへ直接POSTリクエストを送信した。
+
+```bash
+curl.exe -i -X POST http://localhost:8080/posts -d "name=test&content=test"
+```
+
+レスポンスとして`403 Forbidden`が返り、CSRFトークンを持たない投稿が拒否されることを確認した。
+
+![CSRFトークンなしの投稿](images/csrf-forbidden.jpg)
