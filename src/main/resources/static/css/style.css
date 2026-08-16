@@ -1,0 +1,126 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background-color: #f5f7f9;
+    color: #0f1419;
+    font-family: Arial, "Helvetica Neue", sans-serif;
+}
+
+.timeline {
+    width: 100%;
+    max-width: 640px;
+    min-height: 100vh;
+    margin: 0 auto;
+    background-color: #ffffff;
+    border-right: 1px solid #eff3f4;
+    border-left: 1px solid #eff3f4;
+}
+
+.page-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #eff3f4;
+}
+
+.page-header h1 {
+    margin: 0;
+    font-size: 22px;
+}
+
+.post-composer {
+    padding: 20px;
+    border-bottom: 1px solid #eff3f4;
+}
+
+.form-field {
+    margin-bottom: 16px;
+}
+
+.form-field label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: bold;
+}
+
+.form-field input,
+.form-field textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #cfd9de;
+    border-radius: 6px;
+    font: inherit;
+}
+
+.form-field textarea {
+    resize: vertical;
+}
+
+.form-actions {
+    text-align: right;
+}
+
+.form-actions button {
+    padding: 10px 22px;
+    border: 0;
+    border-radius: 9999px;
+    background-color: #1d9bf0;
+    color: #ffffff;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.refresh-area {
+    padding: 12px 20px;
+    text-align: center;
+    border-bottom: 1px solid #eff3f4;
+}
+
+.refresh-button {
+    color: #1d9bf0;
+    text-decoration: none;
+}
+
+.post {
+    padding: 16px 20px;
+    border-bottom: 1px solid #eff3f4;
+}
+
+.post-header {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    color: #536471;
+    font-size: 14px;
+}
+
+.post-name {
+    color: #0f1419;
+    font-weight: bold;
+}
+
+.post-content {
+    margin: 8px 0 0;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+.error {
+    margin: 6px 0 0;
+    color: #d93025;
+    font-size: 14px;
+}
+
+.empty-message {
+    padding: 32px 20px;
+    color: #536471;
+    text-align: center;
+}
+
+@media (max-width: 640px) {
+    .timeline {
+        border: 0;
+    }
+}
