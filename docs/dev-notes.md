@@ -373,4 +373,182 @@ BUILD SUCCESS
 
 ![JUnit全件実行結果](images/junit-test-result.jpg)
 
+## AWSへの公開
 
+### 概要
+
+Spring BootアプリケーションをAWS EC2へ配置し、Amazon RDS for PostgreSQLと接続してインターネットから利用できる状態にしました。
+
+### システム構成
+
+| 項目 | 内容 |
+|---|---|
+| EC2 | Amazon Linux 2023 |
+| Java | Amazon Corretto 25 |
+| Webサーバー | Nginx |
+| アプリケーション | Spring Boot 4.1.0 |
+| データベース | Amazon RDS for PostgreSQL 18.3 |
+| DBインスタンス | db.t4g.micro |
+| アプリ起動管理 | systemd |
+| 公開ポート | HTTP 80 |
+| アプリ内部ポート | 8080 |
+| DBポート | 5432 |
+
+Nginxが80番ポートでリクエストを受け付け、EC2内で稼働するSpring Bootの8080番ポートへ転送する構成としました。
+
+RDSのパブリックアクセスは無効にし、同じVPC内のEC2からのみ接続できるようにしました。
+
+### 本番環境用設定
+
+本番環境用として、次のファイルを追加しました。
+
+```text
+src/main/resources/application-prod.properties
+```
+
+設定内容：
+
+```properties
+spring.datasource.url=${DB_URL}
+spring.datasource.username=${DB_USERNAME}
+spring.datasource.password=${DB_PASSWORD}
+
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=false
+
+server.port=8080
+```
+
+DB接続情報は環境変数から取得し、パスワードやRDSエンドポイントをGitリポジトリへ保存しない構成としました。
+
+EC2では次のファイルに環境変数を設定しています。
+
+```text
+/etc/bbs/bbs.env
+```
+
+環境変数ファイルはrootユーザーのみが読み取れるよう、ファイル権限を制限しました。
+
+### EC2の構築
+
+EC2インスタンスへSSH接続し、Amazon Corretto 25をインストールしました。
+
+```bash
+sudo dnf install java-25-amazon-corretto-headless -y
+```
+
+バージョン確認結果：
+
+```text
+openjdk version "25.0.4"
+OpenJDK Runtime Environment Corretto-25
+```
+
+ローカル環境でMavenビルドしたJARを、SCPでEC2へ転送しました。
+
+```text
+/opt/bbs/bbs.jar
+```
+
+アプリケーション専用ユーザーを作成し、systemdサービスとして起動しています。
+
+```text
+/etc/systemd/system/bbs.service
+```
+
+EC2の再起動後もアプリケーションが自動起動するよう、サービスを有効化しました。
+
+### Nginxの設定
+
+Nginxをインストールし、80番ポートへのリクエストをSpring Bootの8080番ポートへ転送するリバースプロキシを設定しました。
+
+```text
+/etc/nginx/conf.d/bbs.conf
+```
+
+アプリケーションの8080番ポートはインターネットへ直接公開せず、Nginx経由でアクセスする構成としています。
+
+### RDSの設定
+
+Amazon RDS for PostgreSQLを次の構成で作成しました。
+
+- PostgreSQL 18.3
+- db.t4g.micro
+- ストレージ20 GiB
+- マルチAZなし
+- パブリックアクセスなし
+- ポート5432
+- 自動バックアップ有効
+- ストレージ暗号化有効
+
+RDSの簡単作成機能でEC2との接続を設定し、接続用のVPCセキュリティグループを自動構成しました。
+
+EC2へPostgreSQLクライアントを導入し、RDSへ接続してアプリケーション用の`bbs`データベースを作成しました。
+
+### systemdとNginxの稼働確認
+
+Spring BootアプリケーションとNginxが稼働していることを確認しました。
+
+![systemdとNginxの稼働確認](images/aws/services-active.jpg)
+
+確認コマンド：
+
+```bash
+sudo systemctl is-active bbs
+sudo systemctl is-active nginx
+```
+
+確認結果：
+
+```text
+active
+active
+```
+
+### 本番環境での動作確認
+
+AWS上の本番環境で、以下を確認しました。
+
+- 投稿を登録できること
+- 登録した投稿が一覧へ表示されること
+- ページを再読み込みしても投稿が保持されること
+- 名前・本文が未入力の場合にバリデーションエラーが表示されること
+- いいねを追加できること
+- 再度クリックしていいねを取り消せること
+
+#### 投稿確認
+
+![本番環境での投稿確認](images/aws/post-created.jpg)
+
+#### バリデーション確認
+
+![本番環境でのバリデーション確認](images/aws/validation.jpg)
+
+#### いいね追加
+
+![本番環境でのいいね追加](images/aws/like-added.jpg)
+
+#### いいね取り消し
+
+![本番環境でのいいね取り消し](images/aws/like-removed.jpg)
+### 苦労した点
+
+#### いいね機能の追加・取り消し
+
+最初はボタンを押すたびにいいね数を加算する実装だったため、同じ利用者が何度でもいいねを増やせる状態になっていました。
+
+単純に1回押した後でボタンを無効化すると、いいねを取り消せなくなるため、次の仕様へ変更しました。
+
+- 1回目のクリックでいいねを追加する
+- 同じセッションで2回目にクリックした場合はいいねを取り消す
+- データベースには投稿ごとのいいね数を保存する
+- セッションには、現在の利用者がいいねした投稿を記録する
+- 画面全体を再読み込みせず、JavaScriptのFetch APIで件数と表示状態を更新する
+
+データベースが保持する「投稿全体のいいね数」と、セッションが保持する「現在の利用者がいいねしたか」という2種類の状態を分けて管理する必要があり、この整理に苦労しました。
+
+また、Fetch APIによるPOSTリクエストにもCSRFトークンが必要なため、リクエストヘッダーへCSRFトークンを設定しました。
+
+通信中の連続クリックを防ぐため、処理中はボタンを一時的に無効化し、処理完了後に再び操作可能にしています。
+
+現在はログイン機能を実装していないため、いいね状態はユーザーアカウントではなくセッション単位で管理しています。そのため、別のブラウザや新しいセッションからは同じ投稿へ再度いいねできます。
