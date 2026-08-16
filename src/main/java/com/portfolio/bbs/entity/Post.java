@@ -27,6 +27,9 @@ public class Post {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "like_count", nullable = false)
+    private int likeCount;
+
     protected Post() {
     }
 
@@ -54,5 +57,19 @@ public class Post {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public int getLikeCount() {
+        return likeCount;
+    }
+
+    public void incrementLikeCount() {
+        likeCount++;
+    }
+
+    public void decrementLikeCount() {
+        if (likeCount > 0) {
+            likeCount--;
+        }
     }
 }

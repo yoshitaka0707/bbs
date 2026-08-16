@@ -107,6 +107,50 @@ body {
     white-space: pre-wrap;
 }
 
+.post-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 12px;
+}
+
+.like-button {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    padding: 6px 10px;
+    border: 0;
+    border-radius: 9999px;
+    background-color: transparent;
+    color: #536471;
+    font: inherit;
+    cursor: pointer;
+}
+
+.like-button:hover {
+    background-color: #fff1f2;
+    color: #f91880;
+}
+
+.like-button.liked {
+    background-color: #fff1f2;
+    color: #f91880;
+}
+
+.like-button:disabled {
+    cursor: wait;
+    opacity: 0.6;
+}
+
+.like-count {
+    min-width: 1em;
+}
+
+.like-error {
+    color: #d93025;
+    font-size: 14px;
+}
+
 .error {
     margin: 6px 0 0;
     color: #d93025;
