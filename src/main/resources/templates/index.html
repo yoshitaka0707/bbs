@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BBS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<main class="timeline">
+    <header class="page-header">
+        <h1>BBS</h1>
+    </header>
+
+    <section class="post-composer">
+        <form th:action="@{/posts}" th:object="${postForm}" method="post">
+            <div class="form-field">
+                <label for="name">名前</label>
+                <input id="name"
+                       type="text"
+                       th:field="*{name}"
+                       maxlength="50">
+
+                <p class="error"
+                   th:if="${#fields.hasErrors('name')}"
+                   th:errors="*{name}">
+                </p>
+            </div>
+
+            <div class="form-field">
+                <label for="content">本文</label>
+                <textarea id="content"
+                          th:field="*{content}"
+                          maxlength="500"
+                          rows="5"></textarea>
+
+                <p class="error"
+                   th:if="${#fields.hasErrors('content')}"
+                   th:errors="*{content}">
+                </p>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit">投稿する</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="refresh-area">
+        <a class="refresh-button" th:href="@{/}">投稿を更新</a>
+    </section>
+
+    <section class="post-list">
+        <p class="empty-message" th:if="${#lists.isEmpty(posts)}">
+            まだ投稿はありません。
+        </p>
+
+        <article class="post" th:each="post : ${posts}">
+            <div class="post-header">
+                <span class="post-name" th:text="${post.name}">名前</span>
+                <time th:text="${#temporals.format(post.createdAt, 'yyyy/MM/dd HH:mm')}">
+                    投稿日時
+                </time>
+            </div>
+
+            <p class="post-content" th:text="${post.content}">投稿本文</p>
+        </article>
+    </section>
+</main>
+</body>
+</html>
