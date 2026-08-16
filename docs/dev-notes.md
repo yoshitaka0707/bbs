@@ -294,3 +294,83 @@ headers: {
 
 ![いいね取り消し後の画面](images/like-removed.jpg)
 
+## JUnitによる単体テスト
+
+JUnit 5とMockitoを使用し、Service層とController層の単体テストを実装した。
+
+テスト対象と依存先を分離するため、以下の構成としている。
+
+```text
+PostServiceTest
+└─ PostRepositoryをMockitoでモック
+
+PostControllerTest
+└─ PostServiceをMockitoでモック
+```
+
+実際のPostgreSQLには接続せず、モックの返却値と呼び出し結果を利用してテストする。
+
+### PostServiceTest
+
+`PostRepository`をモック化し、以下の6件を確認した。
+
+* 投稿一覧の取得結果を返すこと
+* 投稿登録時に名前と本文の前後空白を除去すること
+* いいね件数を1増やせること
+* いいね件数を1減らせること
+* いいね件数が`0`未満にならないこと
+* 存在しない投稿へのいいねで`404 Not Found`相当の例外になること
+
+### PostControllerTest
+
+`@WebMvcTest`とMockMvcを使用し、`PostService`を`@MockitoBean`でモック化した。
+
+以下の7件を確認した。
+
+* トップ画面を正常に表示できること
+* 正常な投稿後にトップ画面へリダイレクトすること
+* 名前と本文が未入力の場合に入力エラーとなること
+* CSRFトークンなしの投稿が拒否されること
+* 初回のいいねで件数を加算すること
+* 同じセッションでの2回目のいいねで取り消すこと
+* CSRFトークンなしのいいねが拒否されること
+
+Spring Securityを含むControllerテストには、Spring Boot 4.1のテスト用Starterを使用した。
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security-test</artifactId>
+    <scope>test</scope>
+</dependency>
+```
+
+### 起動確認テストの扱い
+
+Spring Initializrが自動生成した`BbsApplicationTests`は、`@SpringBootTest`によってアプリケーション全体と実DB接続を起動するテストだった。
+
+今回のテスト方針は、依存先をMockitoで分離した単体テストであるため、実DB環境に依存する`BbsApplicationTests`は削除した。
+
+実DBを使用する結合テストは、テスト用PostgreSQLやTestcontainersなどの環境が必要になるため、今回の対象外としている。
+
+### 実行結果
+
+以下のコマンドで全テストを実行した。
+
+```powershell
+.\mvnw.cmd test
+```
+
+Service層6件、Controller層7件の合計13件がすべて成功した。
+
+```text
+Tests run: 13
+Failures: 0
+Errors: 0
+Skipped: 0
+BUILD SUCCESS
+```
+
+![JUnit全件実行結果](images/junit-test-result.jpg)
+
+
